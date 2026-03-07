@@ -1,0 +1,20 @@
+# Environment / secrets — NEVER commit this
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Streamlit — protect real secrets, allow config + example
+.streamlit/secrets.toml
+.env
+
+# VS Code
+.vscode/
