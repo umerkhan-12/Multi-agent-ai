@@ -126,6 +126,41 @@ class TelegramNotify:
         urllib.request.urlopen(req, timeout=10).read()
 
 
+class WhatsApp:
+    """Meta WhatsApp Cloud API (free tier). developers.facebook.com → WhatsApp → API Setup.
+
+    Env: WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_OWNER_NUMBER (yours, e.g. 923001234567).
+    Note: free-form text only delivers inside the 24h window after the recipient last
+    messaged your WhatsApp number. Send "hi" to your bot number once a day (or use an
+    approved template via send_template) so alerts always arrive.
+    """
+
+    API = "https://graph.facebook.com/v21.0"
+
+    def __init__(self, token: str, phone_number_id: str, owner: str | None = None):
+        self.token, self.phone_number_id, self.owner = token, phone_number_id, owner
+
+    def _post(self, payload: dict) -> dict:
+        req = urllib.request.Request(
+            f"{self.API}/{self.phone_number_id}/messages",
+            data=json.dumps({"messaging_product": "whatsapp", **payload}).encode(),
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.token}"},
+        )
+        return json.loads(urllib.request.urlopen(req, timeout=15).read() or b"{}")
+
+    def send_text(self, to: str, text: str) -> dict:
+        return self._post({"to": to, "type": "text", "text": {"body": text[:4096]}})
+
+    def send_template(self, to: str, name: str = "hello_world", lang: str = "en_US") -> dict:
+        return self._post({"to": to, "type": "template",
+                           "template": {"name": name, "language": {"code": lang}}})
+
+    # Notify protocol → message the owner
+    def send(self, text):
+        if self.owner:
+            self.send_text(self.owner, text)
+
+
 class StripePayments:
     """Real Stripe Payment Links. `pip install stripe` and set STRIPE_API_KEY."""
 
@@ -144,7 +179,19 @@ class StripePayments:
 
 # ── Factory ─────────────────────────────────────────────────────────────────
 
+def _whatsapp() -> WhatsApp | None:
+    if os.getenv("WHATSAPP_TOKEN") and os.getenv("WHATSAPP_PHONE_NUMBER_ID"):
+        return WhatsApp(os.environ["WHATSAPP_TOKEN"], os.environ["WHATSAPP_PHONE_NUMBER_ID"],
+                        os.getenv("WHATSAPP_OWNER_NUMBER"))
+    return None
+
+
+whatsapp: WhatsApp | None = _whatsapp()
+
+
 def _notify() -> Notify:
+    if whatsapp and whatsapp.owner:
+        return whatsapp
     if os.getenv("SLACK_WEBHOOK_URL"):
         return SlackNotify(os.environ["SLACK_WEBHOOK_URL"])
     if os.getenv("TELEGRAM_BOT_TOKEN") and os.getenv("TELEGRAM_CHAT_ID"):

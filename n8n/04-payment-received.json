@@ -1,0 +1,65 @@
+{
+  "name": "AI Marketing Team \u2014 Payment Received",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "payment",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Payment webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "payment"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.MT_API_URL}}/events/payment",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{$env.MT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ email: $json.body.email, phone: $json.body.phone, amount_usd: Number($json.body.amount_usd), product: $json.body.product, ref: $json.body.ref, payment_ref: $json.body.payment_ref }) }}"
+      },
+      "name": "Log sale",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Payment webhook": {
+      "main": [
+        [
+          {
+            "node": "Log sale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  }
+}

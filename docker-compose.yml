@@ -1,0 +1,33 @@
+# One command, three services, all free:
+#   docker compose up -d
+#   API        → http://localhost:8000/docs
+#   Dashboard  → http://localhost:8501
+#   n8n        → http://localhost:5678   (import the files in ./n8n)
+services:
+  api:
+    build: .
+    env_file: .env
+    volumes: ["./data:/app/data", "./marketing_team/knowledge:/app/marketing_team/knowledge"]
+    ports: ["8000:8000"]
+
+  dashboard:
+    build: .
+    env_file: .env
+    command: streamlit run dashboard.py --server.port 8501 --server.address 0.0.0.0
+    volumes: ["./data:/app/data", "./marketing_team/knowledge:/app/marketing_team/knowledge"]
+    ports: ["8501:8501"]
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    ports: ["5678:5678"]
+    environment:
+      - GENERIC_TIMEZONE=Asia/Karachi
+      - TZ=Asia/Karachi
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - MT_API_URL=http://api:8000
+      - MT_API_KEY=${MT_API_KEY:-}
+    volumes: ["n8n_data:/home/node/.n8n"]
+    depends_on: [api]
+
+volumes:
+  n8n_data:

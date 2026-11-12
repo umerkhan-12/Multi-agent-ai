@@ -1,0 +1,65 @@
+{
+  "name": "AI Marketing Team \u2014 Lead Capture",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Lead form webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "lead"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.MT_API_URL}}/events/lead",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{$env.MT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $json.body.name, email: $json.body.email, phone: $json.body.phone, utm: $json.body.utm || $json.query.utm_content, source: $json.body.source || 'form', message: $json.body.message || '' }) }}"
+      },
+      "name": "Send lead to agents",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Lead form webhook": {
+      "main": [
+        [
+          {
+            "node": "Send lead to agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  }
+}

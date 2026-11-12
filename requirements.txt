@@ -1,6 +1,15 @@
+# ── Original multi-LLM chat (app.py / main.py) ──
 anthropic
 openai
 google-genai
 groq
 streamlit
 python-dotenv
+
+# ── AI Marketing Team (marketing_team/, dashboard.py) ──
+fastapi
+uvicorn[standard]
+pydantic>=2
+mcp
+# optional: real Stripe payment links + webhook signature checks
+# stripe
